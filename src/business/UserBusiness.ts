@@ -1,6 +1,6 @@
 import { UserDatabase } from "../database/UserDatabase";
 import { User } from "../models/User";
-import { userDB } from "../types";
+import { UserDB } from "../types";
 
 export class UserBusiness{
     public async getAllUsers(){
@@ -17,4 +17,5 @@ export class UserBusiness{
 
         return users
     }
+
 }
