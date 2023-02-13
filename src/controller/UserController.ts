@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { UserBusiness } from "../business/UserBusiness";
 import { UserDatabase } from "../database/UserDatabase";
 import { User } from "../models/User";
-import { userDB } from "../types";
+import { UserDB } from "../types";
 
 export class UserController{
     public getAllUsers = async (req:Request, res: Response)=>{
@@ -28,4 +28,5 @@ export class UserController{
             }
         }
     }
+
 }

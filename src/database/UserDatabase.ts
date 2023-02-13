@@ -1,5 +1,5 @@
 import { BaseDatabase } from "./BaseDatabase";
-import { userDB } from "../types";
+import { UserDB } from "../types";
 
 export class UserDatabase extends BaseDatabase {
     public static TABLE_USERS = "users"
@@ -7,6 +7,21 @@ export class UserDatabase extends BaseDatabase {
     public async findUsers(){
         const result = await BaseDatabase
         .connection(UserDatabase.TABLE_USERS)
+        const userDB = result
+
+        return userDB
+    }
+
+    public async signUp(newUser:UserDB){
+        await BaseDatabase
+        .connection(UserDatabase.TABLE_USERS)
+        .insert(newUser)
+    }
+
+    public async login(email: string, password: string){
+        const result = await BaseDatabase
+        .connection(UserDatabase.TABLE_USERS)
+        .where({email} && {password})
         const userDB = result
 
         return userDB
