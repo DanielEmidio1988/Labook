@@ -4,10 +4,10 @@ import { UserDB } from "../types";
 export class UserDatabase extends BaseDatabase {
     public static TABLE_USERS = "users"
 
-    public async findUsers(){
-        const result = await BaseDatabase
+    public async getAllUsers(){
+        const userDB = await BaseDatabase
         .connection(UserDatabase.TABLE_USERS)
-        const userDB = result
+        // const userDB = result
 
         return userDB
     }

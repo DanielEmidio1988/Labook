@@ -1,18 +1,20 @@
-import { PostbyUsersDB, PostDB } from "../types"
+import { PostDB } from "../types"
 import { db } from "../database/Knex"
 import { Request,Response } from "express"
+import { PostBusiness } from "../business/PostBusiness"
 
 export class PostController{
-    constructor(){}
+    constructor(
+        private postBusiness: PostBusiness
+    ){}
 
     public getPosts = async(req:Request, res:Response)=>{
         try {
-            const getAllPosts = await db.select("posts.id","posts.content","posts.likes","posts.dislikes","posts.created_at AS createdAt","posts.updated_at AS updatedAt").from("posts")
-    
-            const postsbyUser:PostbyUsersDB[] = [...getAllPosts]
-    
-            res.status(201).send(postsbyUser)
-            
+
+            const output = await this.postBusiness.getPosts()
+
+            res.status(201).send(output)   
+                      
         } catch (error) {
             console.log(error)
         
@@ -30,26 +32,16 @@ export class PostController{
 
     public insertNewPost = async(req:Request, res:Response)=>{
         try {
-            const {id, creator_id, content} = req.body
-    
-            if (content !== undefined){
-                if(typeof content !== "string"){
-                    res.status(400)
-                    throw new Error("'content' precisa ser uma string")
-                }
-            }else{
-                res.status(400)
-                throw new Error("Favor, informar o 'content'")
+
+            const input: PostDB = {
+                id: req.body.id,
+                creator_id: req.body.creator_id,
+                content: req.body.content,
             }
-    
-            const newPost:PostDB ={
-                id,
-                creator_id,
-                content,
-            }
-    
-            await db("posts").insert(newPost)
-            res.status(200).send({message:"Publicação realizada com sucesso!", post: newPost})
+
+            const output = await this.postBusiness.insertNewPost(input)
+            
+            res.status(200).send(output)
     
         } catch (error) {
             console.log(error)
@@ -68,8 +60,19 @@ export class PostController{
 
     public updatePost = async (req:Request, res: Response)=>{
         try {
+
+            // const input ={
+            //     id: req.params.id,
+            //     content: req.body.content
+
+            // }
+
+            // const output = await this.postBusiness.insertNewPost(input)
+
             const id = req.params.id
             const newContent = req.body.content
+    
+    
     
             if (newContent !== undefined){
                 if(typeof newContent !== "string"){

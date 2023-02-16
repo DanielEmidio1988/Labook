@@ -24,7 +24,10 @@ export interface PostbyUsersDB{
     dislikes: number,
     created_at: string,
     updated_at: string,
-    creator: UserDB[]
+    creator: {
+        id: string,
+        name: string,
+    }
 }
 
 export interface LikeDislikeDB{
