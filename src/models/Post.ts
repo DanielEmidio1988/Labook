@@ -1,11 +1,10 @@
-import { PostbyUsersDB, PostDB } from "../types";
+import { PostbyUsersDB, PostDB, UserDB } from "../types";
 
 export class Post {
     constructor(
         private id: string,
         private content: string,
         private likes: number,
-        private creator_id: string,
         private dislikes: number,
         private created_at: string,
         private updated_at: string,
@@ -18,8 +17,12 @@ export class Post {
     public toDBModel(): PostDB{
         return {
             id:this.id,
-            creator_id: this.creator_id,
+            creator_id: this.creator.id,
             content: this.content,
+            likes: this.likes,
+            dislikes: this.dislikes,
+            created_at: this.created_at,
+            updated_at: this.updated_at,        
         }
     }
 

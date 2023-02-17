@@ -2,10 +2,13 @@ import { PostDB } from "../types"
 import { db } from "../database/Knex"
 import { Request,Response } from "express"
 import { PostBusiness } from "../business/PostBusiness"
+import { PostDTO } from "../dtos/PostDTO"
+
 
 export class PostController{
     constructor(
-        private postBusiness: PostBusiness
+        private postBusiness: PostBusiness,
+        private postDTO: PostDTO
     ){}
 
     public getPosts = async(req:Request, res:Response)=>{
@@ -32,12 +35,12 @@ export class PostController{
 
     public insertNewPost = async(req:Request, res:Response)=>{
         try {
+      
+        const id = req.body.id
+        const creator_id = req.body.creator_id 
+        const content = req.body.content
 
-            const input: PostDB = {
-                id: req.body.id,
-                creator_id: req.body.creator_id,
-                content: req.body.content,
-            }
+            const input = this.postDTO.insertInputPost(id, creator_id, content)
 
             const output = await this.postBusiness.insertNewPost(input)
             
@@ -60,46 +63,15 @@ export class PostController{
 
     public updatePost = async (req:Request, res: Response)=>{
         try {
+            
+        const id = req.params.id
+        const content = req.body.content
 
-            // const input ={
-            //     id: req.params.id,
-            //     content: req.body.content
+        const input = await this.postDTO.updateInputPost(id,content)
 
-            // }
+        await this.postBusiness.updatePost(input)
 
-            // const output = await this.postBusiness.insertNewPost(input)
-
-            const id = req.params.id
-            const newContent = req.body.content
-    
-    
-    
-            if (newContent !== undefined){
-                if(typeof newContent !== "string"){
-                    res.status(400)
-                    throw new Error("'content' precisa ser uma string")
-                }
-            }else{
-                res.status(400)
-                throw new Error("Favor, informar o 'content'")
-            }
-    
-            const [filterPost]:PostDB[] = await db("posts").where({id:id})
-    
-            if(filterPost){
-                const updatePost:PostDB={
-                    content: newContent || filterPost.content,
-                    creator_id: filterPost.creator_id,
-                    id: filterPost.id,
-                }
-    
-                await db("posts").update(updatePost).where({id:id})
-                res.status(200).send({message: "Publicação atualizada com sucesso!", post: updatePost.content})
-            }else{
-                res.status(400)
-                throw new Error("Publicação não encontrada")
-            }
-           
+           res.status(201).send("Atualização realizada com sucesso!")
         } catch (error) {
             console.log(error)
         
@@ -118,16 +90,10 @@ export class PostController{
     public deletePost = async (req:Request, res: Response)=>{
         try {
             const id = req.params.id
-    
-            const [filterPostToDelete]:PostDB[] = await db("posts").where({id})
-    
-            if(filterPostToDelete){
-                await db("posts").del().where({id:id})
-                res.status(200).send({message:"Publicação excluida com sucesso!", post: filterPostToDelete})
-            }else{
-                res.status(400)
-                throw new Error("Publicação não encontrada")
-            }
+
+            await this.postBusiness.deletePost(id)
+
+            res.status(201).send("Publicação excluida com sucesso!")
     
         } catch (error) {
             console.log(error)
