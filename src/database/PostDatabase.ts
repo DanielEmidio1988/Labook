@@ -1,3 +1,4 @@
+import { PostDB } from "../types";
 import { BaseDatabase } from "./BaseDatabase";
 import { UserDatabase } from "./UserDatabase";
 
@@ -22,5 +23,33 @@ export class PostDatabase extends BaseDatabase{
             postsDB,
             creatorsDB,
         }
+    }
+
+    public getPostById = async (id: string)=>{
+        const [postDB]:PostDB[] | undefined = await BaseDatabase
+        .connection(PostDatabase.POSTS_TABLE)
+        .select().where({id:id})
+
+        return postDB
+    }
+
+    public insertNewPost = async(newPostDB:PostDB)=>{
+        await BaseDatabase.connection(PostDatabase.POSTS_TABLE)
+        .insert(newPostDB)
+
+    }
+
+    public updatePost = async(updatePost:PostDB,id:string)=>{
+        await BaseDatabase
+        .connection(PostDatabase.POSTS_TABLE)
+        .update(updatePost)
+        .where({id:id})
+    }
+
+    public deletePostbyId = async(id:string)=>{
+        await BaseDatabase
+        .connection(PostDatabase.POSTS_TABLE)
+        .del()
+        .where({id:id})
     }
 }

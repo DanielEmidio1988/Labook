@@ -1,10 +1,13 @@
 import { db } from "../database/Knex"
 import { PostDatabase } from "../database/PostDatabase"
 import { PostDB } from "../types"
+import { Post } from "../models/Post"
+import { PostDTO, InsertInputPostDTO,UpdateInputDTO } from "../dtos/PostDTO"
 
 export class PostBusiness {
     constructor(
-        private postDatabase: PostDatabase
+        private postDatabase: PostDatabase,
+        private postDTO: PostDTO
     ){}
 
     public getPosts = async ()=>{
@@ -15,15 +18,17 @@ export class PostBusiness {
         } = await this.postDatabase.getPostsWithCreator()
 
         const posts = postsDB.map((postDB)=>{
-            return {
-                id: postDB.id,
-                content: postDB.content,
-                likes: postDB.likes,
-                dislikes: postDB.dislikes,
-                createdAt: postDB.created_at,
-                updatedAt: postDB.updated_at,
-                creator: getCreator(postDB.creator_id)
-            }
+            const post = new Post (
+                postDB.id,
+                postDB.content,
+                postDB.likes,
+                postDB.dislikes,
+                postDB.created_at,
+                postDB.updated_at,
+                getCreator(postDB.creator_id)
+                )
+
+                return post.toBusinessModel()
         })
 
         function getCreator(creatorId: string){
@@ -40,25 +45,28 @@ export class PostBusiness {
         return posts  
     }
 
-    public insertNewPost = async(input:PostDB)=>{
+    public insertNewPost = async(input:InsertInputPostDTO)=>{
 
         const {id,creator_id, content} = input
 
-        if (content !== undefined){
-            if(typeof content !== "string"){
-                throw new Error("'content' precisa ser uma string")
-            }
-        }else{
-            throw new Error("Favor, informar o 'content'")
-        }
+        const created_at = (new Date()).toISOString()
+        const updated_at = (new Date()).toISOString()
+        const likes = 0
+        const dislikes = 0
 
-        const newPost:PostDB ={
+        const newPost = new Post (
             id,
-            creator_id,
             content,
-        }
-
-        await db("posts").insert(newPost)
+            likes,
+            dislikes,
+            created_at,
+            updated_at,
+            {id:creator_id,
+            name: "",}
+            )
+        
+        const newPostDB = newPost.toDBModel()
+        await this.postDatabase.insertNewPost(newPostDB)
 
         const output = {
             message: "Publicação realizada com sucesso",
@@ -68,25 +76,44 @@ export class PostBusiness {
         return output
     }
 
-    // public updatePost = async (input: any)=>{
+    public updatePost = async (input:UpdateInputDTO)=>{
+        const {id,content} = input
 
-    //     if (newContent !== undefined){
-    //         if(typeof newContent !== "string"){
-    //             throw new Error("'content' precisa ser uma string")
-    //         }
-    //     }else{
-    //         throw new Error("Favor, informar o 'content'")
-    //     }
+        const filterPostToUpdate = await this.postDatabase.getPostById(id)
 
-    //     const [filterPost]:PostDB[] = await db("posts").where({id:id})
+        if(!filterPostToUpdate){
+            throw new Error("'Id' não localizada")
+        }
 
-    //     if(filterPost){
-    //         const updatePost:PostDB={
-    //             content: newContent || filterPost.content,
-    //             creator_id: filterPost.creator_id,
-    //             id: filterPost.id,
-    //         }
+        const updateAt = (new Date()).toISOString()
 
-    //         await db("posts").update(updatePost).where({id:id})
-    // }
+        const postToUpdate = new Post(
+            id,
+            content,
+            filterPostToUpdate.likes,
+            filterPostToUpdate.dislikes,
+            filterPostToUpdate.created_at,
+            updateAt,
+            {
+                id:filterPostToUpdate.creator_id,
+                name: ""
+            }
+        )
+
+        const postToUpdateDB = postToUpdate.toDBModel()
+        await this.postDatabase.updatePost(postToUpdateDB,id)
+    }
+
+
+    public deletePost = async (id: string)=>{
+
+        const filterPostToDelete = await this.postDatabase.getPostById(id)
+    
+        if(filterPostToDelete){
+            await this.postDatabase.deletePostbyId(id)
+        }else{
+            throw new Error("Publicação não encontrada")
+        }
+
+    }
 }

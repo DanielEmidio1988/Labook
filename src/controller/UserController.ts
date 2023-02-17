@@ -5,12 +5,14 @@ import { User } from "../models/User";
 import { UserDB } from "../types";
 
 export class UserController{
+    constructor(
+        private userBusiness: UserBusiness
+    ){}
     public getAllUsers = async (req:Request, res: Response)=>{
         try {
             const q = req.query.q as string | undefined
 
-            const userBusiness = new UserBusiness()
-            const output = await userBusiness.getAllUsers()
+            const output = await this.userBusiness.getAllUsers()
             
             res.status(200).send(output)
             

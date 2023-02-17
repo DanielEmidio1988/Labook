@@ -4,17 +4,17 @@ export interface UserDB{
     email: string,
     password: string,
     role: string,
-    // create_at: string,
+    create_at: string,
 }
 
 export interface PostDB{
     id: string,
     creator_id: string,
     content: string,
-    // likes: number,
-    // dislikes: number,
-    // created_at: string,
-    // updated_at: string,
+    likes: number,
+    dislikes: number,
+    created_at: string,
+    updated_at: string,
 }
 
 export interface PostbyUsersDB{
