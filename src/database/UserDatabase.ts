@@ -19,10 +19,10 @@ export class UserDatabase extends BaseDatabase {
     }
 
     public async login(email: string, password: string){
-        const result = await BaseDatabase
+        const [userDB]:UserDB[] | undefined = await BaseDatabase
         .connection(UserDatabase.TABLE_USERS)
+        .select()
         .where({email} && {password})
-        const userDB = result
 
         return userDB
     }
