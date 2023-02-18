@@ -69,9 +69,9 @@ export class PostController{
 
         const input = await this.postDTO.updateInputPost(id,content)
 
-        await this.postBusiness.updatePost(input)
+        const output = await this.postBusiness.updatePost(input)
 
-           res.status(201).send("Atualização realizada com sucesso!")
+           res.status(201).send(output)
         } catch (error) {
             console.log(error)
         
@@ -91,9 +91,9 @@ export class PostController{
         try {
             const id = req.params.id
 
-            await this.postBusiness.deletePost(id)
+            const output = await this.postBusiness.deletePost(id)
 
-            res.status(201).send("Publicação excluida com sucesso!")
+            res.status(201).send(output)
     
         } catch (error) {
             console.log(error)
@@ -107,6 +107,32 @@ export class PostController{
             } else {
                 res.send("Erro inesperado")
             }   
+        }
+    }
+
+    public likeDislike = async (req:Request, res: Response)=>{
+        try {
+
+            const input = {
+                id: req.params.id,
+                like: req.body.like}
+
+            const output = await this.postBusiness.likeDislike(input)
+
+            res.status(201).send(output)
+            
+        } catch (error) {
+            console.log(error)
+        
+            if (req.statusCode === 200) {
+                res.status(500)
+            }
+    
+            if (error instanceof Error) {
+                res.send(error.message)
+            } else {
+                res.send("Erro inesperado")
+            }  
         }
     }
 }

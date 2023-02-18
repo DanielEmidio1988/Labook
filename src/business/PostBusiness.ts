@@ -1,8 +1,9 @@
 import { db } from "../database/Knex"
 import { PostDatabase } from "../database/PostDatabase"
 import { PostDB } from "../types"
+import { BadRequestError } from "../errors/BadRequestError"
 import { Post } from "../models/Post"
-import { PostDTO, InsertInputPostDTO,UpdateInputDTO } from "../dtos/PostDTO"
+import { PostDTO, InsertInputPostDTO,UpdateInputDTO, LikeDislikeDTO } from "../dtos/PostDTO"
 
 export class PostBusiness {
     constructor(
@@ -54,6 +55,14 @@ export class PostBusiness {
         const likes = 0
         const dislikes = 0
 
+        if (content !== undefined){
+            if(typeof content !== "string"){
+                throw new BadRequestError("'content' precisa ser uma string")
+            }
+        }else{
+            throw new BadRequestError("Favor, informar o 'content'")
+        }
+
         const newPost = new Post (
             id,
             content,
@@ -82,7 +91,15 @@ export class PostBusiness {
         const filterPostToUpdate = await this.postDatabase.getPostById(id)
 
         if(!filterPostToUpdate){
-            throw new Error("'Id' não localizada")
+            throw new BadRequestError("'Id' não localizada")
+        }
+
+        if (content !== undefined){
+            if(typeof content !== "string"){
+                throw new BadRequestError("'content' precisa ser uma string")
+            }
+        }else{
+            throw new BadRequestError("Favor, informar o 'content'")
         }
 
         const updateAt = (new Date()).toISOString()
@@ -102,6 +119,13 @@ export class PostBusiness {
 
         const postToUpdateDB = postToUpdate.toDBModel()
         await this.postDatabase.updatePost(postToUpdateDB,id)
+
+        const output = {
+            message: "Atualização realizada com sucesso",
+            post: postToUpdate,
+        }
+
+        return output
     }
 
 
@@ -111,8 +135,61 @@ export class PostBusiness {
     
         if(filterPostToDelete){
             await this.postDatabase.deletePostbyId(id)
+            const output = {
+                message: "Publicação excluida com sucesso",
+                post: filterPostToDelete}
+            return output
         }else{
-            throw new Error("Publicação não encontrada")
+            throw new BadRequestError("Publicação não encontrada")
+        }
+    }
+
+    public likeDislike = async (input: LikeDislikeDTO)=>{
+        const {id, like} = input
+
+        const filterPostToLike = await this.postDatabase.getPostById(id)
+
+        if(!filterPostToLike){
+            throw new BadRequestError("Publicação não encontrada")
+        }
+
+        const updateAt = (new Date()).toISOString()
+        let likes = 0
+        let dislikes = 0
+
+        if(like === 0){
+            dislikes = 1
+            
+        }else if(like === 1){
+            likes = 1
+        }else{
+            throw new BadRequestError("Informe um número válido. (1) like, (0) dislike")
+        }
+
+        const postToLike = new Post(
+            id,
+            filterPostToLike.content,
+            likes,
+            dislikes,
+            filterPostToLike.created_at,
+            updateAt,
+            {id: filterPostToLike.creator_id,
+            name: ""}
+        )
+
+        const postToLikeDB = postToLike.toDBModel()
+        await this.postDatabase.updatePost(postToLikeDB,id)
+
+        if(like === 0){
+            const output = {
+                message: "'Dislike' realizado com sucesso!", 
+                post: postToLikeDB}
+            return output
+        }else if(like===1){
+            const output = {
+                message: "'Like' realizado com sucesso!", 
+                post: postToLikeDB}
+            return output
         }
 
     }
