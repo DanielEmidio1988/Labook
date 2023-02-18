@@ -4,11 +4,13 @@ import { PostDB } from "../types"
 import { BadRequestError } from "../errors/BadRequestError"
 import { Post } from "../models/Post"
 import { PostDTO, InsertInputPostDTO,UpdateInputDTO, LikeDislikeDTO } from "../dtos/PostDTO"
+import { IdGenerator } from "../services/IdGenerator"
 
 export class PostBusiness {
     constructor(
         private postDatabase: PostDatabase,
-        private postDTO: PostDTO
+        private postDTO: PostDTO,
+        private idGenerator: IdGenerator
     ){}
 
     public getPosts = async ()=>{
@@ -48,7 +50,9 @@ export class PostBusiness {
 
     public insertNewPost = async(input:InsertInputPostDTO)=>{
 
-        const {id,creator_id, content} = input
+        const {creator_id, content} = input
+
+        const id = this.idGenerator.generate()
 
         const created_at = (new Date()).toISOString()
         const updated_at = (new Date()).toISOString()

@@ -35,9 +35,9 @@ export class UserController{
 
     public signUp = async(req: Request, res: Response)=>{
         try {
-            const {id, name, email, password} = req.body
+            const {name, email, password} = req.body
             
-            const input = this.userDTO.signUp(id,name,email,password)
+            const input = this.userDTO.signUp(name,email,password)
 
             const output = await this.userBusiness.signUp(input)
 

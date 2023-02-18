@@ -1,7 +1,6 @@
     export interface InsertInputPostDTO{
         content: string,
         creator_id: string,
-        id: string,
     }
 
     export interface UpdateInputDTO{
@@ -15,12 +14,11 @@
     }
 
    export class PostDTO {
-    insertInputPost = (id: string, creator_id:string, content: string) :InsertInputPostDTO =>{
+    insertInputPost = (creator_id:string, content: string) :InsertInputPostDTO =>{
 
         const result: InsertInputPostDTO={
             content,
             creator_id,
-            id,
         }
 
         return result
