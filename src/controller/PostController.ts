@@ -36,11 +36,10 @@ export class PostController{
     public insertNewPost = async(req:Request, res:Response)=>{
         try {
       
-        const id = req.body.id
         const creator_id = req.body.creator_id 
         const content = req.body.content
 
-            const input = this.postDTO.insertInputPost(id, creator_id, content)
+            const input = this.postDTO.insertInputPost(creator_id, content)
 
             const output = await this.postBusiness.insertNewPost(input)
             

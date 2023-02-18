@@ -1,18 +1,22 @@
 import { UserDatabase } from "../database/UserDatabase";
 import { User } from "../models/User";
-import { UserDB } from "../types";
+import { UserDB, TokenPayload } from "../types";
 import { SignUpDTO, LoginDTO } from "../dtos/UserDTO";
 import { ROLE_USER } from "../types";
 import { BadRequestError } from "../errors/BadRequestError";
+import { IdGenerator } from "../services/IdGenerator";
+import { TokenManager } from "../services/TokenManager";
 
 export class UserBusiness{
     constructor(
-        private userDatabase: UserDatabase
+        private userDatabase: UserDatabase,
+        private idGenerator: IdGenerator,
+        private tokenManager: TokenManager
     ){}
     public async getAllUsers(){
         
         const usersDB = await this.userDatabase.getAllUsers()
-        
+
         const users = 
         usersDB.map((userDB)=>{ 
             const user = new User(
@@ -31,8 +35,10 @@ export class UserBusiness{
     }
 
     public async signUp(input: SignUpDTO){
-        const {id,name,email,password} = input
+        const {name,email,password} = input
 
+        const id = this.idGenerator.generate()
+        
         const created_at = (new Date()).toISOString()
 
         if(typeof name !== "string"){
@@ -56,12 +62,19 @@ export class UserBusiness{
             created_at,
         )
 
+        const tokenPayload: TokenPayload = {
+            id: newUser.getId(),
+            name: newUser.getName(),
+            role: newUser.getRole()
+        }
+        
+        const token = this.tokenManager.createToken(tokenPayload)
         const newUserDB = newUser.toDBModel()
         await this.userDatabase.signUp(newUserDB)
 
         const output={
             message: "Usuário cadastrado com sucesso",
-            data: newUserDB
+            token,
         }
 
         return output
@@ -71,8 +84,6 @@ export class UserBusiness{
     public async login(input:LoginDTO ){
         const {email, password} = input
 
-        const searchUserByLogin = await this.userDatabase.login(email,password)
-
         if(typeof email !== "string"){        
             throw new BadRequestError("'E-mail' precisa ser uma string.")
         }
@@ -81,15 +92,33 @@ export class UserBusiness{
             throw new BadRequestError("Favor, informar o 'password'")
         }
 
+        const searchUserByLogin = await this.userDatabase.login(email,password)
+
         if(searchUserByLogin){
-            const output = {message:"Login realizado com sucesso", data:searchUserByLogin}
+
+            const userLogin = new User(
+                searchUserByLogin.id,
+                searchUserByLogin.name,
+                searchUserByLogin.email,
+                searchUserByLogin.password,
+                searchUserByLogin.role,
+                searchUserByLogin.create_at,
+            )
+
+            const tokenPayload: TokenPayload = {
+                id: userLogin.getId(),
+                name: userLogin.getName(),
+                role: userLogin.getRole()
+            }
+            
+            const token = this.tokenManager.createToken(tokenPayload)
+
+            const output = {message:"Login realizado com sucesso", token}
             return output
         }else{
-            const output = {message:"Dados incorretos!", data:searchUserByLogin}
+            const output = {message:"Dados incorretos!"}
             return output
-        }
-
-        
+        }  
 
     }
 

@@ -40,3 +40,9 @@ export interface LikeDislikeDB{
     post_id: string,
     like: number,
 }
+
+export interface TokenPayload {
+    id: string,
+		name: string,
+    role: ROLE_USER
+}
