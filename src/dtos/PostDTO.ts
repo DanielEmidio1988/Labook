@@ -1,5 +1,3 @@
-    import { Post } from "../models/Post";
-
     export interface InsertInputPostDTO{
         content: string,
         creator_id: string,
@@ -11,15 +9,14 @@
         id: string,
     }
 
+    export interface LikeDislikeDTO{
+        id: string,
+        like: number,
+    }
+
    export class PostDTO {
     insertInputPost = (id: string, creator_id:string, content: string) :InsertInputPostDTO =>{
-        if (content !== undefined){
-            if(typeof content !== "string"){
-                throw new Error("'content' precisa ser uma string")
-            }
-        }else{
-            throw new Error("Favor, informar o 'content'")
-        }
+
         const result: InsertInputPostDTO={
             content,
             creator_id,
@@ -30,13 +27,6 @@
     }
 
     updateInputPost = (id: string, content: string): UpdateInputDTO =>{
-        if (content !== undefined){
-            if(typeof content !== "string"){
-                throw new Error("'content' precisa ser uma string")
-            }
-        }else{
-            throw new Error("Favor, informar o 'content'")
-        }
 
         const result:UpdateInputDTO={
             id,
@@ -45,4 +35,15 @@
 
         return result
     }
+
+    likeDislike = (id:string,like:number):LikeDislikeDTO=>{
+        const result:LikeDislikeDTO={
+            id,
+            like,
+        }
+
+        return result
+    }
+
+    
    } 

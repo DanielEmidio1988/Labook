@@ -12,11 +12,11 @@ export class UserController{
     ){}
     public getAllUsers = async (req:Request, res: Response)=>{
         try {
-            const q = req.query.q as string | undefined
+            // const q = req.query.q as string | undefined
 
             const output = await this.userBusiness.getAllUsers()
             
-            res.status(200).send(output)
+            res.status(201).send(output)
             
         } catch (error) {
             console.log(error)
