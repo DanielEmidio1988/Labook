@@ -5,12 +5,14 @@ import { BadRequestError } from "../errors/BadRequestError"
 import { Post } from "../models/Post"
 import { PostDTO, InsertInputPostDTO,UpdateInputDTO, LikeDislikeDTO } from "../dtos/PostDTO"
 import { IdGenerator } from "../services/IdGenerator"
+import { TokenManager } from "../services/TokenManager"
 
 export class PostBusiness {
     constructor(
         private postDatabase: PostDatabase,
         private postDTO: PostDTO,
-        private idGenerator: IdGenerator
+        private idGenerator: IdGenerator,
+        private tokenManager: TokenManager
     ){}
 
     public getPosts = async ()=>{
@@ -48,16 +50,19 @@ export class PostBusiness {
         return posts  
     }
 
-    public insertNewPost = async(input:InsertInputPostDTO)=>{
+    public insertNewPost = async(input:InsertInputPostDTO, token: any)=>{
 
         const {creator_id, content} = input
-
         const id = this.idGenerator.generate()
-
         const created_at = (new Date()).toISOString()
         const updated_at = (new Date()).toISOString()
         const likes = 0
         const dislikes = 0
+        const payload = this.tokenManager.getPayload(token)
+
+        if (payload === null) {
+            throw new BadRequestError("token inválido")
+        }
 
         if (content !== undefined){
             if(typeof content !== "string"){

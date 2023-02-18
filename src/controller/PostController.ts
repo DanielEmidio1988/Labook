@@ -38,10 +38,11 @@ export class PostController{
       
         const creator_id = req.body.creator_id 
         const content = req.body.content
+        const token = req.headers.authorization
 
             const input = this.postDTO.insertInputPost(creator_id, content)
 
-            const output = await this.postBusiness.insertNewPost(input)
+            const output = await this.postBusiness.insertNewPost(input, token)
             
             res.status(200).send(output)
     
