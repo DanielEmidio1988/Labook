@@ -1,3 +1,8 @@
+export interface GetAllUsersInputDTO{
+    q: string,
+    token: string,
+}
+
 export interface SignUpDTO{
     // id: string, 
     name:string, 
@@ -11,6 +16,16 @@ export interface LoginDTO{
 }
 
 export class UserDTO{
+    getAllUsersInput = (q:string, token:string):GetAllUsersInputDTO=>{
+        const result:GetAllUsersInputDTO={
+            q,
+            token,
+        }
+
+        return result
+
+    }
+
     signUp = (name:string,email:string,password:string):SignUpDTO=>{
 
             const result:SignUpDTO ={

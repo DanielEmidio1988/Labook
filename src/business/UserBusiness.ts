@@ -1,9 +1,11 @@
 import { UserDatabase } from "../database/UserDatabase";
 import { User } from "../models/User";
-import { UserDB, TokenPayload } from "../types";
-import { SignUpDTO, LoginDTO } from "../dtos/UserDTO";
-import { ROLE_USER } from "../types";
+import { UserDB, TokenPayload, ROLE_USER } from "../types";
+import { SignUpDTO, LoginDTO,GetAllUsersInputDTO } from "../dtos/UserDTO";
+import { HashManager } from "../services/HashManager";
+// import { ROLE_USER } from "../types";
 import { BadRequestError } from "../errors/BadRequestError";
+import { NotFoundError } from "../errors/NotFoundError";
 import { IdGenerator } from "../services/IdGenerator";
 import { TokenManager } from "../services/TokenManager";
 
@@ -11,10 +13,29 @@ export class UserBusiness{
     constructor(
         private userDatabase: UserDatabase,
         private idGenerator: IdGenerator,
-        private tokenManager: TokenManager
+        private tokenManager: TokenManager,
+        private hashManager: HashManager
     ){}
-    public async getAllUsers(){
+    public async getAllUsers(input: GetAllUsersInputDTO){
+
+        const {q, token} = input
         
+        if(typeof token !== "string"){
+            throw new BadRequestError("'Token' não informado!")
+        }
+
+        const payload = this.tokenManager.getPayload(token)
+
+        if (payload === null){
+            throw new BadRequestError("'Token' não válido!")
+        }
+
+        if(payload.role !== ROLE_USER.ADMIN ){
+            throw new BadRequestError('Você não possui perfil para acessar este recurso!')
+        }
+
+        console.log(payload)
+
         const usersDB = await this.userDatabase.getAllUsers()
 
         const users = 
@@ -38,8 +59,16 @@ export class UserBusiness{
         const {name,email,password} = input
 
         const id = this.idGenerator.generate()
+
+        const passwordHash = await this.hashManager.hash(password)
         
         const created_at = (new Date()).toISOString()
+
+        const filterUserbyEmail = await this.userDatabase.getUserByEmail(email)
+
+        if(filterUserbyEmail){
+            throw new BadRequestError("'E-mail' já cadastrado em outra conta.")
+        }
 
         if(typeof name !== "string"){
             throw new BadRequestError("'Name' precisa ser uma string.")
@@ -57,7 +86,7 @@ export class UserBusiness{
             id,
             name,
             email,
-            password,
+            passwordHash,
             ROLE_USER.NORMAL,
             created_at,
         )
@@ -92,7 +121,16 @@ export class UserBusiness{
             throw new BadRequestError("Favor, informar o 'password'")
         }
 
-        const searchUserByLogin = await this.userDatabase.login(email,password)
+        const searchUserByLogin = await this.userDatabase.getUserByEmail(email)
+
+        if(!searchUserByLogin){
+            throw new NotFoundError("'E-mail' não cadastrado!")
+        }
+        const passwordHash = this.hashManager.compare(password, searchUserByLogin.password)
+
+        if(!passwordHash){
+            throw new BadRequestError("'e-mail' ou 'senha' inválidos") 
+        }
 
         if(searchUserByLogin){
 

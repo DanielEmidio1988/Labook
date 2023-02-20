@@ -1,43 +1,76 @@
+export interface GetAllPostsInputDTO{
+    q: string,
+    token: string,
+}
+    
     export interface InsertInputPostDTO{
         content: string,
-        creator_id: string,
+        token: string,
     }
 
     export interface UpdateInputDTO{
-        content: string,
         id: string,
+        content: string,
+        token: string,
+    }
+
+    export interface DeleteInputPostDTO{
+        id: string,
+        token: string,
     }
 
     export interface LikeDislikeDTO{
         id: string,
         like: number,
+        token: string,
     }
 
    export class PostDTO {
-    insertInputPost = (creator_id:string, content: string) :InsertInputPostDTO =>{
+
+    getAllPostsInput = (q:string, token:string):GetAllPostsInputDTO=>{
+        const result:GetAllPostsInputDTO={
+            q,
+            token,
+        }
+        return result
+    }
+
+    insertInputPost = (content: string, token: string) :InsertInputPostDTO =>{
 
         const result: InsertInputPostDTO={
             content,
-            creator_id,
+            token,
         }
 
         return result
     }
 
-    updateInputPost = (id: string, content: string): UpdateInputDTO =>{
+    deleteInputPost = (id: string, token: string) :DeleteInputPostDTO =>{
+
+        const result: DeleteInputPostDTO={
+            id,
+            token,
+        }
+
+        return result
+    }
+
+    updateInputPost = (id:string, content: string, token: string): UpdateInputDTO =>{
 
         const result:UpdateInputDTO={
             id,
             content,
+            token,
         }
 
         return result
     }
 
-    likeDislike = (id:string,like:number):LikeDislikeDTO=>{
+    likeDislike = (id:string,like:number, token: string):LikeDislikeDTO=>{
         const result:LikeDislikeDTO={
             id,
             like,
+            token,
         }
 
         return result
