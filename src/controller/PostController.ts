@@ -14,7 +14,13 @@ export class PostController{
     public getPosts = async(req:Request, res:Response)=>{
         try {
 
-            const output = await this.postBusiness.getPosts()
+            const input ={
+                q:req.query.q as string | undefined,
+                token: req.headers.authorization
+            }  
+            
+
+            const output = await this.postBusiness.getPosts(input)
 
             res.status(201).send(output)   
                       
@@ -35,14 +41,13 @@ export class PostController{
 
     public insertNewPost = async(req:Request, res:Response)=>{
         try {
-      
-        const creator_id = req.body.creator_id 
+                
         const content = req.body.content
         const token = req.headers.authorization
 
-            const input = this.postDTO.insertInputPost(creator_id, content)
+            const input = this.postDTO.insertInputPost(content, token)
 
-            const output = await this.postBusiness.insertNewPost(input, token)
+            const output = await this.postBusiness.insertNewPost(input)
             
             res.status(200).send(output)
     
@@ -66,8 +71,9 @@ export class PostController{
             
         const id = req.params.id
         const content = req.body.content
+        const token = req.headers.authorization
 
-        const input = await this.postDTO.updateInputPost(id,content)
+        const input = await this.postDTO.updateInputPost(id,content, token)
 
         const output = await this.postBusiness.updatePost(input)
 
@@ -89,9 +95,13 @@ export class PostController{
 
     public deletePost = async (req:Request, res: Response)=>{
         try {
-            const id = req.params.id
 
-            const output = await this.postBusiness.deletePost(id)
+            const id = req.params.id
+            const token = req.headers.authorization
+
+            const input = await this.postDTO.deleteInputPost(id, token)
+
+            const output = await this.postBusiness.deletePost(input)
 
             res.status(201).send(output)
     
@@ -115,7 +125,9 @@ export class PostController{
 
             const input = {
                 id: req.params.id,
-                like: req.body.like}
+                like: req.body.like,
+                token: req.headers.authorization,
+            }
 
             const output = await this.postBusiness.likeDislike(input)
 

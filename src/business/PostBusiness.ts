@@ -1,22 +1,35 @@
 import { db } from "../database/Knex"
 import { PostDatabase } from "../database/PostDatabase"
-import { PostDB } from "../types"
+import { UserDatabase } from "../database/UserDatabase"
+import { PostDB, ROLE_USER } from "../types"
 import { BadRequestError } from "../errors/BadRequestError"
 import { Post } from "../models/Post"
-import { PostDTO, InsertInputPostDTO,UpdateInputDTO, LikeDislikeDTO } from "../dtos/PostDTO"
+import { PostDTO, InsertInputPostDTO,UpdateInputDTO, LikeDislikeDTO, GetAllPostsInputDTO, DeleteInputPostDTO } from "../dtos/PostDTO"
 import { IdGenerator } from "../services/IdGenerator"
 import { TokenManager } from "../services/TokenManager"
 
 export class PostBusiness {
     constructor(
         private postDatabase: PostDatabase,
+        private userDatabase: UserDatabase,
         private postDTO: PostDTO,
         private idGenerator: IdGenerator,
         private tokenManager: TokenManager
     ){}
 
-    public getPosts = async ()=>{
-               
+    public getPosts = async (input:GetAllPostsInputDTO)=>{
+        const {q, token} = input
+
+        if(typeof token !== "string"){
+            throw new BadRequestError("'Token' não informado!")
+        }
+
+        const payload = this.tokenManager.getPayload(token)
+
+        if (payload === null){
+            throw new BadRequestError("'Token' não válido!")
+        }
+            
         const {
             postsDB,
             creatorsDB,
@@ -50,19 +63,26 @@ export class PostBusiness {
         return posts  
     }
 
-    public insertNewPost = async(input:InsertInputPostDTO, token: any)=>{
+    public insertNewPost = async(input:InsertInputPostDTO)=>{
 
-        const {creator_id, content} = input
+        const {content, token} = input
+
+        if(typeof token !== "string"){
+            throw new BadRequestError("'Token' não informado!")
+        }
+
+        const payload = this.tokenManager.getPayload(token)
+
+        if (payload === null){
+            throw new BadRequestError("'Token' não válido!")
+        }
+
         const id = this.idGenerator.generate()
         const created_at = (new Date()).toISOString()
         const updated_at = (new Date()).toISOString()
         const likes = 0
         const dislikes = 0
-        const payload = this.tokenManager.getPayload(token)
-
-        if (payload === null) {
-            throw new BadRequestError("token inválido")
-        }
+        const creator_id = payload.id
 
         if (content !== undefined){
             if(typeof content !== "string"){
@@ -80,7 +100,7 @@ export class PostBusiness {
             created_at,
             updated_at,
             {id:creator_id,
-            name: "",}
+            name: payload.name,}
             )
         
         const newPostDB = newPost.toDBModel()
@@ -95,12 +115,28 @@ export class PostBusiness {
     }
 
     public updatePost = async (input:UpdateInputDTO)=>{
-        const {id,content} = input
+        const {id,content,token} = input
+
+        if(typeof token !== "string"){
+            throw new BadRequestError("'Token' não informado!")
+        }
+
+        const payload = this.tokenManager.getPayload(token)
+
+        if (payload === null){
+            throw new BadRequestError("'Token' não válido!")
+        }
 
         const filterPostToUpdate = await this.postDatabase.getPostById(id)
 
         if(!filterPostToUpdate){
             throw new BadRequestError("'Id' não localizada")
+        }
+
+        if(payload.role !== ROLE_USER.ADMIN){
+            if(filterPostToUpdate.creator_id !== payload.id){
+                throw new BadRequestError("Você não possui autorização para editar esta publicação.")
+            }
         }
 
         if (content !== undefined){
@@ -122,7 +158,7 @@ export class PostBusiness {
             updateAt,
             {
                 id:filterPostToUpdate.creator_id,
-                name: ""
+                name: payload.name
             }
         )
 
@@ -138,9 +174,28 @@ export class PostBusiness {
     }
 
 
-    public deletePost = async (id: string)=>{
+    public deletePost = async (input:DeleteInputPostDTO )=>{
+
+        const {id, token} = input
+
+        if(typeof token !== "string"){
+            throw new BadRequestError("'Token' não informado!")
+        }
+
+        const payload = this.tokenManager.getPayload(token)
+
+        if (payload === null){
+            throw new BadRequestError("'Token' não válido!")
+        }
 
         const filterPostToDelete = await this.postDatabase.getPostById(id)
+        const filterUserDB = await this.userDatabase.getUserById(filterPostToDelete.creator_id)
+
+        if(filterUserDB.role !== ROLE_USER.ADMIN){
+            if(filterUserDB.id !== payload.id){
+                throw new BadRequestError("Você não possui autorização para realizar esta operação")
+            }
+        }
     
         if(filterPostToDelete){
             await this.postDatabase.deletePostbyId(id)
@@ -154,9 +209,24 @@ export class PostBusiness {
     }
 
     public likeDislike = async (input: LikeDislikeDTO)=>{
-        const {id, like} = input
+        const {id, like, token} = input
+
+        if(typeof token !== "string"){
+            throw new BadRequestError("'Token' não informado!")
+        }
+
+        const payload = this.tokenManager.getPayload(token)
+
+        if (payload === null){
+            throw new BadRequestError("'Token' não válido!")
+        }
 
         const filterPostToLike = await this.postDatabase.getPostById(id)
+        const filterIdLD = await this.postDatabase.likeDislike(payload.id, id)
+
+        if(filterIdLD){
+            throw new BadRequestError("Você já interagiu com esta publicação")
+        }
 
         if(!filterPostToLike){
             throw new BadRequestError("Publicação não encontrada")
@@ -186,8 +256,15 @@ export class PostBusiness {
             name: ""}
         )
 
+        const updateLikeDB = {
+            user_id: payload.id,
+            post_id: id,
+            like: 1
+        } 
+
         const postToLikeDB = postToLike.toDBModel()
         await this.postDatabase.updatePost(postToLikeDB,id)
+        await this.postDatabase.updateLikeDislike(updateLikeDB)
 
         if(like === 0){
             const output = {

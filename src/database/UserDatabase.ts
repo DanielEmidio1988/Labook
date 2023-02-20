@@ -27,4 +27,20 @@ export class UserDatabase extends BaseDatabase {
         return userDB
     }
 
+    public getUserByEmail = async (email: string)=>{
+        const [userDB]:UserDB[] | undefined = await BaseDatabase
+        .connection(UserDatabase.TABLE_USERS)
+        .select().where({email:email})
+
+        return userDB
+    }
+
+    public getUserById = async (id: string)=>{
+        const [userDB]:UserDB[] | undefined = await BaseDatabase
+        .connection(UserDatabase.TABLE_USERS)
+        .select().where({id:id})
+
+        return userDB
+    }
+
 }

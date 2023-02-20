@@ -12,9 +12,13 @@ export class UserController{
     ){}
     public getAllUsers = async (req:Request, res: Response)=>{
         try {
-            // const q = req.query.q as string | undefined
+            
+            const input ={
+                q:req.query.q as string | undefined,
+                token: req.headers.authorization
+            }           
 
-            const output = await this.userBusiness.getAllUsers()
+            const output = await this.userBusiness.getAllUsers(input)
             
             res.status(201).send(output)
             

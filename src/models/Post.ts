@@ -1,4 +1,4 @@
-import { PostbyUsersDB, PostDB, UserDB } from "../types";
+import { PostbyUsersDB, PostDB, UserDB, LikeDislikeDB } from "../types";
 
 export class Post {
     constructor(
@@ -23,6 +23,14 @@ export class Post {
             dislikes: this.dislikes,
             created_at: this.created_at,
             updated_at: this.updated_at,        
+        }
+    }
+
+    public toDBLikeDislikeModel():LikeDislikeDB{
+        return{
+            post_id: this.id,
+            user_id: this.creator.id,
+            like: this.likes,
         }
     }
 
